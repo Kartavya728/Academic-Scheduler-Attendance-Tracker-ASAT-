@@ -1,103 +1,120 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useEffect, useState } from 'react'
+import { supabase } from '../../lib/supabaseClient'
+
+type Course = {
+  code: string
+  full_name: string
+  location: string
+}
+
+type TimetableEntry = {
+  id: string
+  day: string
+  time_slot: string
+  course_code: string
+}
+
+type AttendanceEntry = {
+  id: string
+  course_code: string
+  date: string
+}
+
+export default function HomePage() {
+  const [courses, setCourses] = useState<Course[]>([])
+  const [timetable, setTimetable] = useState<TimetableEntry[]>([])
+  const [attendance, setAttendance] = useState<AttendanceEntry[]>([])
+
+  // Load all data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: courseData } = await supabase.from('courses').select('*')
+      const { data: timetableData } = await supabase.from('timetable').select('*')
+      const { data: attendanceData } = await supabase.from('attendance').select('*')
+
+      setCourses(courseData || [])
+      setTimetable(timetableData || [])
+      setAttendance(attendanceData || [])
+    }
+
+    fetchData()
+  }, [])
+
+  const markAttendance = async (course_code: string) => {
+    const date = new Date().toISOString().split('T')[0] // current date (YYYY-MM-DD)
+    const { error } = await supabase.from('attendance').insert([
+      { course_code, date }
+    ])
+    if (!error) {
+      alert(`Attendance marked for ${course_code}`)
+      setAttendance([...attendance, { id: '', course_code, date }])
+    } else {
+      alert('Error marking attendance')
+    }
+  }
+
+  const getCourseDetails = (code: string) => {
+    const course = courses.find(c => c.code === code)
+    return course
+      ? `${course.full_name} (${course.location})`
+      : code
+  }
+
+  const groupByDay = timetable.reduce<Record<string, TimetableEntry[]>>((acc, entry) => {
+    acc[entry.day] = acc[entry.day] || []
+    acc[entry.day].push(entry)
+    return acc
+  }, {})
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div style={{ padding: '2rem' }}>
+      <h1>📅 Weekly Timetable</h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {Object.keys(groupByDay).map((day) => (
+        <div key={day} style={{ marginBottom: '2rem' }}>
+          <h2>{day}</h2>
+          <table border={1} cellPadding={10} style={{ width: '100%', textAlign: 'left' }}>
+            <thead>
+              <tr>
+                <th>Time Slot</th>
+                <th>Course</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groupByDay[day].map((entry) => (
+                <tr key={entry.id}>
+                  <td>{entry.time_slot}</td>
+                  <td>{getCourseDetails(entry.course_code)}</td>
+                  <td>
+                    <button onClick={() => markAttendance(entry.course_code)}>Mark Attendance</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      ))}
+
+      <h2>📝 Attendance Records</h2>
+      <table border={1} cellPadding={10}>
+        <thead>
+          <tr>
+            <th>Course</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {attendance.map((a, i) => (
+            <tr key={i}>
+              <td>{a.course_code}</td>
+              <td>{a.date}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-  );
+  )
 }
