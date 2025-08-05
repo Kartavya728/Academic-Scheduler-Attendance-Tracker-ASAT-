@@ -2,7 +2,8 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '../../lib/supabaseClient'; // Make sure this path is correct
+import { supabase } from '../../lib/supabaseClient';
+import { Portal } from './Portal'; // <-- IMPORT THE PORTAL
 
 // Types (can be moved to a types.ts file for larger projects)
 type Course = { code: string; full_name: string; location: string };
@@ -30,24 +31,22 @@ export function TimetableCell({ entry, course, onAttendanceMarked }: TimetableCe
   if (!entry || !course) {
     return <td className="timetable-cell empty"></td>;
   }
-
+  
+  // This function now just toggles the state. The rendering is handled elsewhere.
   const handleCellClick = () => {
-    if (!isExpanded) {
-      setIsExpanded(true);
-    } else {
-      // Only close if we are not in the middle of marking attendance
-      setIsExpanded(false);
-      setIsMarking(false);
-    }
-  };
-
-  const handleShowMarking = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent the cell from closing
-    setIsMarking(true);
+    setIsExpanded(true);
   };
   
-  const handleMarkAttendance = async (e: React.MouseEvent, status: AttendanceStatus) => {
-    e.stopPropagation(); // Prevent click from bubbling up
+  const closeModal = () => {
+      setIsExpanded(false);
+      setIsMarking(false); // Also reset marking state when closing
+  };
+
+  const handleShowMarking = () => {
+    setIsMarking(true);
+  };
+
+  const handleMarkAttendance = async (status: AttendanceStatus) => {
     const { error } = await supabase.from('attendance').insert([
       { course_code: entry.course_code, date: attendanceDate, status },
     ]);
@@ -56,54 +55,68 @@ export function TimetableCell({ entry, course, onAttendanceMarked }: TimetableCe
       alert(`Error: ${error.message}`);
     } else {
       alert(`Attendance marked as ${status} for ${course.code}`);
-      // Reset state and notify parent
-      setIsExpanded(false);
-      setIsMarking(false);
       onAttendanceMarked();
     }
-  };
-  
-  // Stop propagation on date controls to prevent cell from closing
-  const handleDateChange = (e: React.MouseEvent, days: number) => {
-      e.stopPropagation();
-      setAttendanceDate(d => modifyDate(d, days));
+    // Close modal after marking
+    closeModal();
   };
 
+  const handleDateChange = (days: number) => {
+    setAttendanceDate(d => modifyDate(d, days));
+  };
+
+  // The main cell just shows the course code and triggers the modal
   return (
-    <td className="timetable-cell" onClick={handleCellClick}>
-      <div className="cell-content">
-        <div className="course-code">{course.code}</div>
-
-        <div className={`details-panel ${isExpanded ? 'expanded' : ''}`}>
-          <div className="details-inner">
-            <div className="course-full-name">{course.full_name}</div>
-            <div className="course-location">📍 {course.location}</div>
-            
-            {!isMarking && (
-              <div className="mark-attendance-button-wrapper">
-                <button className="mark-attendance-btn" onClick={handleShowMarking}>
-                  Mark Attendance
-                </button>
-              </div>
-            )}
-
-            {isMarking && (
-              <div className="attendance-marker">
-                <div className="date-control">
-                  <button onClick={(e) => handleDateChange(e, -1)}>-</button>
-                  <span>{attendanceDate}</span>
-                  <button onClick={(e) => handleDateChange(e, 1)}>+</button>
-                </div>
-                <div className="status-buttons">
-                  <button className="present" onClick={(e) => handleMarkAttendance(e, 'Present')}>Present</button>
-                  <button className="absent" onClick={(e) => handleMarkAttendance(e, 'Absent')}>Absent</button>
-                  <button className="cancelled" onClick={(e) => handleMarkAttendance(e, 'Cancelled')}>Cancelled</button>
-                </div>
-              </div>
-            )}
-          </div>
+    <>
+      <td className="timetable-cell" onClick={handleCellClick}>
+        <div className="cell-content">
+          <div className="course-code">{course.code}</div>
+          <div className="course-location-preview">{course.location}</div>
         </div>
-      </div>
-    </td>
+      </td>
+
+      {/* MODAL RENDERED VIA PORTAL */}
+      {isExpanded && (
+        <Portal>
+          {/* Backdrop to close the modal */}
+          <div className="modal-backdrop" onClick={closeModal}></div>
+          
+          {/* Modal content itself, stopPropagation prevents backdrop click */}
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="course-code">{course.code}</div>
+               <button className="modal-close-btn" onClick={closeModal}>&times;</button>
+            </div>
+            <div className="modal-body">
+                <div className="course-full-name">{course.full_name}</div>
+                <div className="course-location">📍 {course.location}</div>
+                
+                {!isMarking && (
+                  <div className="mark-attendance-button-wrapper">
+                    <button className="mark-attendance-btn" onClick={handleShowMarking}>
+                      Mark Attendance
+                    </button>
+                  </div>
+                )}
+
+                {isMarking && (
+                  <div className="attendance-marker">
+                    <div className="date-control">
+                      <button onClick={() => handleDateChange(-1)}>-</button>
+                      <span>{attendanceDate}</span>
+                      <button onClick={() => handleDateChange(1)}>+</button>
+                    </div>
+                    <div className="status-buttons">
+                      <button className="present" onClick={() => handleMarkAttendance('Present')}>Present</button>
+                      <button className="absent" onClick={() => handleMarkAttendance('Absent')}>Absent</button>
+                      <button className="cancelled" onClick={() => handleMarkAttendance('Cancelled')}>Cancelled</button>
+                    </div>
+                  </div>
+                )}
+            </div>
+          </div>
+        </Portal>
+      )}
+    </>
   );
 }

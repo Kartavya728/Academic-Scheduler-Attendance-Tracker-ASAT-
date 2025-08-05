@@ -24,10 +24,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body>
         {children}
+        <div id="modal-root"></div> {/* <-- ADD THIS LINE */}
       </body>
     </html>
   );
