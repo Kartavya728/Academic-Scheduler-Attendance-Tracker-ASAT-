@@ -1,120 +1,107 @@
-'use client'
+// app/page.tsx
+'use client';
 
-import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabaseClient'
+import { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabaseClient';
+import { TimetableCell } from '../components/TimetableCell';
+import { AttendancePage } from '../components/AttendancePage';
 
-type Course = {
-  code: string
-  full_name: string
-  location: string
-}
+// --- Define Types ---
+type Course = { code: string; full_name: string; location: string };
+type TimetableEntry = { id: string; day: string; time_slot: string; course_code: string };
+type AttendanceEntry = { id: string; course_code: string; date: string; status: 'Present' | 'Absent' | 'Cancelled' };
 
-type TimetableEntry = {
-  id: string
-  day: string
-  time_slot: string
-  course_code: string
-}
-
-type AttendanceEntry = {
-  id: string
-  course_code: string
-  date: string
-}
+// Define the order of days for the timetable grid
+const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export default function HomePage() {
-  const [courses, setCourses] = useState<Course[]>([])
-  const [timetable, setTimetable] = useState<TimetableEntry[]>([])
-  const [attendance, setAttendance] = useState<AttendanceEntry[]>([])
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
+  const [attendance, setAttendance] = useState<AttendanceEntry[]>([]);
+  const [view, setView] = useState<'timetable' | 'attendance'>('timetable');
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load all data on mount
+  // Function to fetch all necessary data
+  const fetchData = async () => {
+    setIsLoading(true);
+    const [courseRes, timetableRes, attendanceRes] = await Promise.all([
+      supabase.from('courses').select('*'),
+      supabase.from('timetable').select('*'),
+      supabase.from('attendance').select('*'),
+    ]);
+    
+    setCourses(courseRes.data || []);
+    setTimetable(timetableRes.data || []);
+    setAttendance(attendanceRes.data || []);
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: courseData } = await supabase.from('courses').select('*')
-      const { data: timetableData } = await supabase.from('timetable').select('*')
-      const { data: attendanceData } = await supabase.from('attendance').select('*')
+    fetchData();
+  }, []);
 
-      setCourses(courseData || [])
-      setTimetable(timetableData || [])
-      setAttendance(attendanceData || [])
-    }
+  const getCourseDetails = (code: string) => courses.find(c => c.code === code);
 
-    fetchData()
-  }, [])
+  // --- Data Transformation for the Grid ---
+  // Get a sorted, unique list of time slots
+  const timeSlots = [...new Set(timetable.map(entry => entry.time_slot))].sort((a,b) => parseInt(a) - parseInt(b));
 
-  const markAttendance = async (course_code: string) => {
-    const date = new Date().toISOString().split('T')[0] // current date (YYYY-MM-DD)
-    const { error } = await supabase.from('attendance').insert([
-      { course_code, date }
-    ])
-    if (!error) {
-      alert(`Attendance marked for ${course_code}`)
-      setAttendance([...attendance, { id: '', course_code, date }])
-    } else {
-      alert('Error marking attendance')
-    }
+  const timetableGrid = timeSlots.reduce((acc, timeSlot) => {
+    acc[timeSlot] = daysOfWeek.reduce((dayAcc, day) => {
+      dayAcc[day] = timetable.find(t => t.time_slot === timeSlot && t.day === day) || null;
+      return dayAcc;
+    }, {} as Record<string, TimetableEntry | null>);
+    return acc;
+  }, {} as Record<string, Record<string, TimetableEntry | null>>);
+
+
+  if (isLoading) {
+    return <div className="loading-screen">Loading Timetable...</div>;
+  }
+  
+  // Render the Attendance Page component when view is 'attendance'
+  if (view === 'attendance') {
+    return <AttendancePage courses={courses} attendance={attendance} onBack={() => setView('timetable')} />;
   }
 
-  const getCourseDetails = (code: string) => {
-    const course = courses.find(c => c.code === code)
-    return course
-      ? `${course.full_name} (${course.location})`
-      : code
-  }
-
-  const groupByDay = timetable.reduce<Record<string, TimetableEntry[]>>((acc, entry) => {
-    acc[entry.day] = acc[entry.day] || []
-    acc[entry.day].push(entry)
-    return acc
-  }, {})
-
+  // Render the Timetable
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>📅 Weekly Timetable</h1>
-
-      {Object.keys(groupByDay).map((day) => (
-        <div key={day} style={{ marginBottom: '2rem' }}>
-          <h2>{day}</h2>
-          <table border={1} cellPadding={10} style={{ width: '100%', textAlign: 'left' }}>
-            <thead>
-              <tr>
-                <th>Time Slot</th>
-                <th>Course</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {groupByDay[day].map((entry) => (
-                <tr key={entry.id}>
-                  <td>{entry.time_slot}</td>
-                  <td>{getCourseDetails(entry.course_code)}</td>
-                  <td>
-                    <button onClick={() => markAttendance(entry.course_code)}>Mark Attendance</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ))}
-
-      <h2>📝 Attendance Records</h2>
-      <table border={1} cellPadding={10}>
-        <thead>
-          <tr>
-            <th>Course</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {attendance.map((a, i) => (
-            <tr key={i}>
-              <td>{a.course_code}</td>
-              <td>{a.date}</td>
+    <div className="page-container">
+      <h1 className="page-title">Timetable - 3rd Sem</h1>
+      <div className="timetable-wrapper">
+        <table className="timetable-grid">
+          <thead>
+            <tr>
+              <th>Time</th>
+              {daysOfWeek.map(day => <th key={day}>{day}</th>)}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {timeSlots.map(timeSlot => (
+              <tr key={timeSlot}>
+                <td className="time-slot-label">{timeSlot}</td>
+                {daysOfWeek.map(day => {
+                  const entry = timetableGrid[timeSlot]?.[day];
+                  const course = entry ? getCourseDetails(entry.course_code) : undefined;
+                  return (
+                    <TimetableCell
+                      key={`${day}-${timeSlot}`}
+                      entry={entry}
+                      course={course}
+                      onAttendanceMarked={fetchData} // Pass the refresh function
+                    />
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="actions-footer">
+        <button onClick={() => setView('attendance')} className="footer-btn">
+          View Attendance Records
+        </button>
+      </div>
     </div>
-  )
+  );
 }
