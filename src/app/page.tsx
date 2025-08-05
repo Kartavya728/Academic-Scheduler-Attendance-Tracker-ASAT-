@@ -1,6 +1,6 @@
 // HomePage.tsx (Updated)
 "use client";
-
+// kartavya
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { TimetableCell } from "../components/TimetableCell"; // Import the new component
