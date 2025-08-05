@@ -77,3 +77,41 @@ body {
 .status-badge.present { background-color: var(--present-color); }
 .status-badge.absent { background-color: var(--absent-color); }
 .status-badge.cancelled { background-color: var(--cancelled-color); }
+
+/* Put this in your global stylesheet or CSS module */
+
+.timetable-wrapper {
+  overflow-x: auto;
+  width: 100%;
+  /* Optional: For nice edge spacing on mobile */
+  padding-bottom: 1rem;
+}
+
+/* Make the table take minimum full width */
+.timetable-grid {
+  min-width: 700px;
+  border-collapse: separate; /* Important for sticky to work correctly */
+}
+
+/* Sticky column */
+.sticky-col {
+  position: sticky;
+  left: 0;
+  background: #14151e; /* Or match your table bg color */
+  z-index: 2;       /* Above regular cells */
+  box-shadow: 2px 0 2px -2px rgba(0,0,0,0.1); /* Soft edge shadow */
+}
+
+/* Enhance for thead */
+.timetable-grid thead .sticky-col {
+  z-index: 4;
+  background: #14151e; /* Slightly different for header if desired */
+}
+
+/* Responsive: Table width on mobile */
+@media (max-width: 700px) {
+  .timetable-grid {
+    min-width: 600px; /* Or however wide your time+days are */
+    font-size: 0.95rem;
+  }
+}

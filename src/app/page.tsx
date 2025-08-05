@@ -64,34 +64,40 @@ export default function HomePage() {
       <div className="timetable-wrapper">
         <table className="timetable-grid">
           <thead>
-            <tr>
-              <th>Time</th>
-              {daysOfWeek.map(day => <th key={day}>{day}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {timeSlots.map(timeSlot => (
-              <tr key={timeSlot}>
-                <td className="time-slot-label">{timeSlot}</td>
-                {daysOfWeek.map(day => {
-                  const entry = timetableGrid[timeSlot]?.[day];
-                  const course = entry ? getCourseDetails(entry.course_code) : undefined;
-                  return (
-                    <TimetableCell
-                      key={`${day}-${timeSlot}`}
-                      entry={entry}
-                      course={course}
-                      onAttendanceMarked={fetchData} // Refresh all data on update
-                    />
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
+  <tr>
+    <th className="sticky-col">Time</th>
+    {daysOfWeek.map(day => <th key={day}>{day}</th>)}
+  </tr>
+</thead>
+<tbody>
+  {timeSlots.map(timeSlot => (
+    <tr key={timeSlot}>
+      <td className="time-slot-label sticky-col">{timeSlot}</td>
+      {daysOfWeek.map(day => {
+        const entry = timetableGrid[timeSlot]?.[day];
+        const course = entry ? getCourseDetails(entry.course_code) : undefined;
+        return (
+          <TimetableCell
+            key={`${day}-${timeSlot}`}
+            entry={entry}
+            course={course}
+            onAttendanceMarked={fetchData}
+          />
+        );
+      })}
+    </tr>
+  ))}
+</tbody>
+
         </table>
       </div>
       <div className="actions-footer">
-        <button onClick={() => setView('attendance')}>View Attendance Records</button>
+        <button 
+          onClick={() => setView('attendance')}
+          className="footer-btn"
+        >
+          View Attendance Records
+        </button>
       </div>
     </div>
   );
