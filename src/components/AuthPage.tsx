@@ -1,9 +1,10 @@
-// app/components/AuthPage.tsx
 "use client";
 
 import { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
+// Assuming you have a basic AuthPage component structure.
+// If your component is different, just apply the change in the catch block.
 export const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
@@ -17,40 +18,22 @@ export const AuthPage = () => {
     setMessage({ type: '', content: '' });
 
     try {
-      let data, error;
-
-      // ================== THE FIX ==================
-      // Instead of assigning the function to a variable, we use an if/else
-      // block to call the function directly on `supabase.auth`.
-      // This preserves the correct 'this' context.
       if (isSignUp) {
-        // For sign-up, you might want to show a confirmation message
-        const response = await supabase.auth.signUp({ email, password });
-        data = response.data;
-        error = response.error;
-        if (!error && data.user) {
-          setMessage({ type: 'success', content: 'Success! Please check your email to verify your account.' });
-        }
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) throw error;
+        setMessage({ type: 'success', content: 'Success! Please check your email to verify your account.' });
       } else {
-        // For sign-in
-        const response = await supabase.auth.signInWithPassword({ email, password });
-        data = response.data;
-        error = response.error;
-        if (!error && data.user) {
-          setMessage({ type: 'success', content: 'Sign in successful! Redirecting...' });
-          // Here you would typically redirect the user, e.g., window.location.href = '/dashboard';
-        }
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        // Successful sign-in is handled by the onAuthStateChange listener in page.tsx
       }
-      // ===============================================
-
-      if (error) {
-        console.error('Supabase returned an error:', error);
-        setMessage({ type: 'error', content: error.message });
+    } catch (error: unknown) { // <-- THE FIX: Use 'unknown' instead of 'any'
+      let errorMessage = 'An unexpected error occurred. Please try again.';
+      // Type-check the error before using it
+      if (error instanceof Error) {
+        errorMessage = error.message;
       }
-
-    } catch (err: any) {
-      console.error("A critical error occurred:", err);
-      setMessage({ type: 'error', content: err.message || 'An unexpected error occurred. Please try again.' });
+      setMessage({ type: 'error', content: errorMessage });
     } finally {
       setLoading(false);
     }

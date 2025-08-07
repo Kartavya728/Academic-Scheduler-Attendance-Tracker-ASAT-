@@ -1,13 +1,13 @@
-// app/components/Dashboard.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react"; // <-- useCallback is included
 import { supabase } from "../../lib/supabaseClient";
 import { TimetableCell } from "./TimetableCell";
 import { AttendancePage } from "./AttendancePage";
 import type { Session } from '@supabase/supabase-js';
 
-// --- Types are correct and do not need changes ---
+// --- Type Definitions ---
+// These match your database schema and are used throughout the component.
 type Course = {
   course_code: string;
   alias: string | null;
@@ -36,6 +36,7 @@ type AttendanceEntry = {
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export function Dashboard({ session }: { session: Session }) {
+  // --- State Management ---
   const [courses, setCourses] = useState<Course[]>([]);
   const [timetable, setTimetable] = useState<TimetableEntry[]>([]);
   const [attendance, setAttendance] = useState<AttendanceEntry[]>([]);
@@ -44,62 +45,62 @@ export function Dashboard({ session }: { session: Session }) {
 
   const user = session.user;
 
-  const fetchData = async () => {
-    setLoading(true);
+  // --- Data Fetching Logic (Corrected with useCallback) ---
+  const fetchData = useCallback(async () => {
     const { data: courseData } = await supabase.from('courses').select('*');
     const { data: timetableData } = await supabase.from('timetable').select('*');
     const { data: attendanceData } = await supabase
       .from('attendance')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', user.id) // Fetches only the current user's attendance
       .order('date', { ascending: false });
 
     setCourses(courseData as Course[] || []);
     setTimetable(timetableData || []);
     setAttendance(attendanceData || []);
     setLoading(false);
-  };
+  }, [user.id]); // Dependency array for useCallback
 
+  // --- useEffect Hook (Corrected with fetchData dependency) ---
   useEffect(() => {
     if (user) {
+      setLoading(true);
       fetchData();
     }
-  }, [user]);
+  }, [user, fetchData]);
 
+  // --- Helper Functions ---
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
-
   const getCourseDetails = (code: string) => courses.find(c => c.course_code === code);
 
-  // --- THE DEFINITIVE FIX IS HERE ---
-  // We define a fixed, hardcoded array of all possible time slots in the exact order you want.
-  // This is the single source of truth for the timetable's structure.
+  // --- THE DEFINITIVE FIX for Time Slot Order and Empty Rows ---
+  // This hardcoded array is the single source of truth for the timetable's structure.
   const timeSlots = [
     "8:00-8:50am",
     "9:00-9:50am",
     "10:00-10:50am",
     "11:00-11:50am",
     "12:00-12:50pm",
-    "1:00-1:50pm", // This slot will appear as an empty row, as requested.
+    "1:00-1:50pm",   // This will correctly render as an empty row
     "2:00-3:00pm",
-    "3:00-4:00pm", // This slot will also appear, empty if no classes.
+    "3:00-4:00pm",   // This will correctly render as an empty row
     "4:00-5:00pm",
     "5:00-5:50pm"
   ];
-  // --- END OF FIX ---
 
-  // The grid creation logic now uses the fixed `timeSlots` array.
-  // It no longer depends on the unpredictable order of fetched data.
+  // --- Data Transformation Logic ---
+  // This maps the fetched data onto our fixed timetable structure.
   const timetableGrid = timeSlots.reduce<Record<string, Record<string, TimetableEntry | null>>>((acc, timeSlot) => {
     acc[timeSlot] = daysOfWeek.reduce<Record<string, TimetableEntry | null>>((dayAcc, day) => {
-      // For each cell in our fixed grid, we LOOK for a matching class.
       dayAcc[day] = timetable.find(t => t.time_slot === timeSlot && t.day === day) || null;
       return dayAcc;
     }, {});
     return acc;
   }, {});
 
+  // --- Conditional Rendering ---
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -108,6 +109,7 @@ export function Dashboard({ session }: { session: Session }) {
     return <AttendancePage courses={courses} attendance={attendance} onBack={() => setView('timetable')} />;
   }
 
+  // --- Main Component Render ---
   return (
     <div className="page-container">
       <button onClick={handleSignOut} className="logout-button">
@@ -124,7 +126,7 @@ export function Dashboard({ session }: { session: Session }) {
             </tr>
           </thead>
           <tbody>
-            {/* We now map over our perfectly ordered `timeSlots` array */}
+            {/* We map over our perfectly ordered `timeSlots` array */}
             {timeSlots.map(timeSlot => (
               <tr key={timeSlot}>
                 <td className="time-slot-label sticky-col">{timeSlot}</td>
@@ -137,7 +139,7 @@ export function Dashboard({ session }: { session: Session }) {
                       entry={entry}
                       course={course}
                       onAttendanceMarked={fetchData}
-                      userId={user.id}
+                      userId={user.id} // Pass the user ID down
                     />
                   );
                 })}

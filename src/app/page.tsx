@@ -37,7 +37,7 @@ export default function HomePage() {
       ) : (
         // Using a key ensures the Dashboard component re-mounts if the user changes,
         // which is good practice for clearing old state.
-        <Dashboard key={session.user.id} session={session} />
+        <Dashboard key={session.user.id} session={session}/>
       )}
     </>
   );
