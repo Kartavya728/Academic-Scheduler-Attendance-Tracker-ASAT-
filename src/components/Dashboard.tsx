@@ -89,6 +89,7 @@ export function Dashboard({ session }: { session: Session }) {
     "4:00-5:00pm",
     "5:00-5:50pm"
   ];
+  const [showMap, setShowMap] = useState(false);
 
   // --- Data Transformation Logic ---
   // This maps the fetched data onto our fixed timetable structure.
@@ -112,9 +113,15 @@ export function Dashboard({ session }: { session: Session }) {
   // --- Main Component Render ---
   return (
     <div className="page-container">
-      <button onClick={handleSignOut} className="logout-button">
-        Sign Out
-      </button>
+<div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+  <button onClick={() => setShowMap(true)} className="map-button">
+    Map
+  </button>
+  <button onClick={handleSignOut} className="logout-button">
+    Sign Out
+  </button>
+</div>
+
 
       <h1>Timetable - 3rd Sem</h1>
       <div className="timetable-wrapper">
@@ -156,6 +163,17 @@ export function Dashboard({ session }: { session: Session }) {
           View Attendance Records
         </button>
       </div>
+      {showMap && (
+  <div className="map-popup-overlay">
+    <div className="map-popup">
+      <button className="close-button" onClick={() => setShowMap(false)}>
+        &times;
+      </button>
+      <img src="/map.jpg" alt="Map" className="map-image" />
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
