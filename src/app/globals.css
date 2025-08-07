@@ -535,3 +535,22 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Add this to your existing stylesheet */
+
+.logout-button {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 8px 16px;
+  background-color: #f1f5f9; /* A light gray, like slate-100 */
+  color: #475569; /* A darker gray, like slate-600 */
+  border: 1px solid #e2e8f0; /* slate-200 */
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+  background-color: #e2e8f0; /* slate-200 */
+}
