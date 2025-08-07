@@ -18,6 +18,7 @@ type Course = {
   slot: string;
   teacher: string;
   credits: number;
+  location: string; // <-- Added to match TimetableCell.tsx
 };
 type TimetableEntry = {
   id: string;

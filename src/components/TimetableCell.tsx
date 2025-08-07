@@ -8,7 +8,7 @@ import { Portal } from './Portal';
 // --- UPDATED TYPES TO INCLUDE ALL COURSE DETAILS ---
 type Course = {
   course_code: string;
-  alias: string | null; // The short name for the timetable cell
+  alias: string | null;
   name: string;
   category: string;
   term: string;
@@ -16,19 +16,18 @@ type Course = {
   slot: string;
   teacher: string;
   credits: number;
+  location: string; // <-- FEATURE ADDED: 'location' is now part of the type
 };
 type TimetableEntry = {
   course_code: string;
 };
-// --- "Postponed" status added ---
 type AttendanceStatus = 'Present' | 'Absent' | 'Cancelled' | 'Postponed';
 
-// --- UPDATED PROPS TO ACCEPT userId ---
 interface TimetableCellProps {
   entry: TimetableEntry | null;
   course: Course | undefined;
   onAttendanceMarked: () => void;
-  userId: string; // <-- CRITICAL: For user-specific attendance
+  userId: string;
 }
 
 const modifyDate = (dateStr: string, days: number) => {
@@ -51,26 +50,23 @@ export function TimetableCell({ entry, course, onAttendanceMarked, userId }: Tim
   const handleShowMarking = () => setIsMarking(true);
   const handleDateChange = (days: number) => setAttendanceDate(d => modifyDate(d, days));
 
-  // --- UPDATED to include userId and better error handling ---
   const handleMarkAttendance = async (status: AttendanceStatus) => {
     const { error } = await supabase.from('attendance').insert([
       {
         course_code: entry.course_code,
         date: attendanceDate,
         status,
-        user_id: userId, // <-- FEATURE ADDED: Pass the userId to Supabase
+        user_id: userId,
       },
     ]);
 
     if (error) {
-      // --- FEATURE ADDED: Specific error for duplicate entries ---
       if (error.code === '23505') {
         alert('Error: You have already marked attendance for this class on this day.');
       } else {
         alert(`Error: ${error.message}`);
       }
     } else {
-      // This alert can be removed if you prefer a silent success
       alert(`Attendance marked as ${status} for ${course.name}`);
       onAttendanceMarked();
     }
@@ -79,11 +75,12 @@ export function TimetableCell({ entry, course, onAttendanceMarked, userId }: Tim
 
   return (
     <>
-      {/* --- UPDATED to show the short alias name --- */}
       <td className="timetable-cell" onClick={handleCellClick}>
         <div className="cell-content">
           <div className="course-code">{course.alias || course.course_code}</div>
-          <div className="course-location-preview">{course.name}</div>
+          <div className="course-name">{course.name}</div>
+<div className="course-location">{course.location}</div>  {/* 👈 Added line */}
+
         </div>
       </td>
 
@@ -92,15 +89,15 @@ export function TimetableCell({ entry, course, onAttendanceMarked, userId }: Tim
           <div className="modal-backdrop" onClick={closeModal}></div>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              {/* The header now shows the full, unambiguous course code */}
               <div className="course-code">{course.course_code}</div>
                <button className="modal-close-btn" onClick={closeModal}>&times;</button>
             </div>
             <div className="modal-body">
-                {/* --- FEATURE ADDED: All course details are now displayed --- */}
                 <div className="course-full-name">{course.name}</div>
                 <div className="course-details-container">
                   <div><strong>Teacher:</strong> {course.teacher}</div>
+                  {/* --- FEATURE ADDED: Venue information is now displayed --- */}
+                  <div><strong>Venue:</strong> {course.location}</div>
                   <div><strong>Category:</strong> {course.category}</div>
                   <div><strong>Slot:</strong> {course.slot}</div>
                   <div><strong>Credits:</strong> {course.credits.toFixed(2)}</div>
@@ -127,7 +124,6 @@ export function TimetableCell({ entry, course, onAttendanceMarked, userId }: Tim
                       <button className="present" onClick={() => handleMarkAttendance('Present')}>Present</button>
                       <button className="absent" onClick={() => handleMarkAttendance('Absent')}>Absent</button>
                       <button className="cancelled" onClick={() => handleMarkAttendance('Cancelled')}>Cancelled</button>
-                      {/* --- FEATURE ADDED: Postponed button --- */}
                       <button className="postponed" onClick={() => handleMarkAttendance('Postponed')}>Postponed</button>
                     </div>
                   </div>
