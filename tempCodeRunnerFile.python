@@ -1,0 +1,78 @@
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.pagesizes import LETTER
+from reportlab.lib import colors
+
+file_path = "Kartavya_Suryawanshi_Resume.pdf"
+
+doc = SimpleDocTemplate(file_path, pagesize=LETTER,
+                        rightMargin=50, leftMargin=50,
+                        topMargin=50, bottomMargin=30)
+
+styles = getSampleStyleSheet()
+styles.add(ParagraphStyle(name='Header', fontSize=16, leading=20, textColor=colors.darkblue, alignment=1, spaceAfter=10))
+styles.add(ParagraphStyle(name='Contact', fontSize=9, leading=12, alignment=1, spaceAfter=10))
+styles.add(ParagraphStyle(name='SectionTitle', fontSize=12, leading=14, textColor=colors.blue, spaceBefore=12, spaceAfter=6, fontName='Helvetica-Bold'))
+styles.add(ParagraphStyle(name='Content', fontSize=10.5, leading=14))
+styles.add(ParagraphStyle(name='MyBullet', fontSize=10.5, leading=14, leftIndent=10, bulletIndent=0))
+
+
+content = []
+
+# Header
+content.append(Paragraph("KARTAVYA SURYAWANSHI", styles['Header']))
+content.append(Paragraph("Email: b24199@students.iitmandi.ac.in | GitHub: github.com/Kartavya728 | Portfolio: kartavya-portfolio-pearl.vercel.app", styles['Contact']))
+
+# Sections
+sections = {
+    "EDUCATION": [
+        "Indian Institute of Technology (IIT) Mandi<br/>B.Tech, [Your Branch Here]<br/>CGPA: 9.32  Expected Graduation: 2028<br/>JEE Advanced Rank: 3895 | JEE Main Rank: 2357"
+    ],
+    "TECHNICAL SKILLS": [
+        "Languages & Frameworks: JavaScript, Python, MERN Stack, Next.js, Django",
+        "Databases & Tools: Supabase, MySQL, n8n",
+        "Cloud & DevOps: AWS (EC2), Vercel",
+        "Domains: Web Development, Machine Learning, Computer Vision",
+        "Soft Skills: Communication, Leadership, Teaching"
+    ],
+    "POSITIONS & RESPONSIBILITIES": [
+        "Web Development Lead, Anusandhan – Led end-to-end development of the official Anusandhan website",
+        "Web Developer, Exodia (Technical Fest), IIT Mandi",
+        "Web Developer, Research Society, IIT Mandi",
+        "Developer, STAC Website, IIT Mandi (Ongoing)"
+    ],
+    "ACHIEVEMENTS": [
+        "11th Rank – Freshers Coding Contest 1.0, conducted by KamandPrompt",
+        "Participant – TIP (Technical Immersion Programme), IIT Mandi",
+        "Top Performer – Bhartiya Antriksh Hackathon (ISRO-themed)",
+        "Selected & Presented – KrackHack 2024, built a YOLO-based traffic detection system"
+    ],
+    "PROJECTS": [
+        ("YOLO-Based Traffic Detection System (Vision Drive)", "Developed a real-time traffic detection and management system using YOLO and OpenCV for smart city applications."),
+        ("Academic Scheduler & Attendance Tracker (ASAT)", "Built a MERN-stack application for scheduling classes and tracking attendance with user authentication."),
+        ("IIT Mandi Official Website Clone", "Designed and deployed a replica site for the official IIT Mandi portal."),
+        ("Tumor Detection Website", "Created a frontend-integrated machine learning system to classify tumor images using a trained ML model."),
+        ("High-Resolution DEM Generation from Lunar Images", "Developed as part of Bhartiya Antriksh Hackathon using photoclinometry techniques on lunar satellite imagery."),
+        ("Personal Portfolio Website", "Showcases projects, resume, contact information, and skills in a sleek, responsive design.")
+    ],
+    "INTERESTS": [
+        "Public Speaking and Communication",
+        "Mentoring and Peer Teaching",
+        "Team Leadership & Collaborative Development",
+        "Hackathons and Innovation Challenges"
+    ]
+}
+
+# Add sections to PDF
+for title, items in sections.items():
+    content.append(Paragraph(title, styles['SectionTitle']))
+    if isinstance(items[0], tuple):
+        for proj_title, desc in items:
+            content.append(Paragraph(f"<b>{proj_title}</b>: {desc}", styles['Content']))
+    else:
+        for item in items:
+            content.append(Paragraph(item, styles['Bullet']))
+
+# Build PDF
+doc.build(content)
+print(f"Resume saved to: {file_path}")

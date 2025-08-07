@@ -387,3 +387,151 @@ body {
 /* We don't need the complex pop-out media query anymore! */
 /* You can safely delete the old @media (max-width: 768px) block */
 /* that targeted the .details-panel */
+/* AuthPage.tsx Styles */
+.auth-page-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #121212; /* Dark background */
+}
+
+.auth-card {
+  background-color: #1e1e1e;
+  padding: 2.5rem 2rem;
+  border-radius: 12px;
+  border: 1px solid #333;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+.auth-title {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #e0e0e0;
+}
+
+.auth-subtitle {
+  color: #888;
+  margin-bottom: 2rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-input {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  color: #e0e0e0;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: #6a44ff;
+  box-shadow: 0 0 0 3px rgba(106, 68, 255, 0.3);
+}
+
+.auth-button {
+  background-color: #6a44ff;
+  color: white;
+  border: none;
+  padding: 0.9rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.auth-button:hover:not(:disabled) {
+  background-color: #5837d4;
+}
+
+.auth-button:disabled {
+  background-color: #444;
+  cursor: not-allowed;
+}
+
+.auth-message {
+  margin-top: 1rem;
+  color: #ffcdd2; /* Light red for errors */
+  font-size: 0.9rem;
+}
+
+.auth-toggle {
+  margin-top: 1.5rem;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.auth-toggle button {
+  background: none;
+  border: none;
+  color: #6a44ff;
+  font-weight: 600;
+  cursor: pointer;
+  padding-left: 5px;
+}
+/* In globals.css */
+.auth-message.error {
+  color: #ffcdd2; /* Light red */
+  background-color: rgba(239, 83, 80, 0.1);
+  border: 1px solid rgba(239, 83, 80, 0.3);
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-top: 1rem;
+}
+.auth-message.success {
+  color: #c8e6c9; /* Light green */
+  background-color: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-top: 1rem;
+}
+/* ... Keep all your existing CSS ... */
+
+/* New styles for the detailed course info in the modal */
+.course-details-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem 1rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.course-details-grid div {
+  display: contents; /* Allows direct grid layout of children */
+}
+
+.course-details-grid strong {
+  font-weight: 500;
+  color: #4b5563;
+  text-align: right;
+}
+
+.course-details-grid span {
+  color: #111827;
+}
+
+/* Adjustments for the cell preview */
+.course-location-preview {
+  font-size: 0.8rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
