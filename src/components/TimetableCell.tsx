@@ -78,7 +78,6 @@ export function TimetableCell({ entry, course, onAttendanceMarked, userId }: Tim
       <td className="timetable-cell" onClick={handleCellClick}>
         <div className="cell-content">
           <div className="course-code">{course.alias || course.course_code}</div>
-          <div className="course-name">{course.name}</div>
 <div className="course-location">{course.location}</div>  {/* 👈 Added line */}
 
         </div>
